@@ -4,14 +4,20 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 
+import com.tooleap.sdk.*;
+import com.tooleap.sdk.TooleapUIService;
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.PixelFormat;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -20,7 +26,12 @@ import android.os.Bundle;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.text.Layout;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.SeekBar;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -75,6 +86,10 @@ public class MainActivity extends UnityPlayerActivity {
     private float zoomLevel = 0;
     private boolean toggleStatus = false;
     FirebaseFirestore db;
+
+
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -104,6 +119,7 @@ public class MainActivity extends UnityPlayerActivity {
         myLayout.addView(mUnityPlayer.getView());
 
         requestRecordAudioPermission();
+        //requestAlwaysONTopPermission();
         sr = SpeechRecognizer.createSpeechRecognizer(this);
         sr.setRecognitionListener(new listener());
         startRecognizing();
@@ -140,6 +156,28 @@ public class MainActivity extends UnityPlayerActivity {
         {
             firstSettings();
         }
+
+
+    }
+
+    public void ClickSettings(View view)
+    {
+        DrawerLayout mDrawerLayout;
+        mDrawerLayout = (DrawerLayout)findViewById(R.id.drawerLayout);
+        mDrawerLayout.openDrawer(Gravity.LEFT);
+    }
+
+    public void ShowIcon()
+    {
+        /*
+        Intent intent = new Intent(this, OVerlayIcon.class);
+        TooleapPopOutMiniApp miniApp = new TooleapPopOutMiniApp(this, intent);
+        miniApp.contentTitle = "My First Mini App";
+        miniApp.notificationText = "Hello! I'm the Tooleap bubble";
+        miniApp.bubbleBackgroundColor = 0x78FFFFFF;
+        Tooleap tooleap = Tooleap.getInstance();
+        tooleap.addMiniApp(miniApp);
+        */
     }
 
     public void SetZoomLevel(double zoom)
@@ -157,8 +195,10 @@ public class MainActivity extends UnityPlayerActivity {
                 if (task.isSuccessful()) {
                     DocumentSnapshot document = task.getResult();
 
-                    SetZoomLevel((double)document.get("zoomLevel"));
-                    SetNightMode(document.getBoolean("isNightMode"));
+                    if(document.get("zoomLevel") != null) SetZoomLevel((double)document.get("zoomLevel"));
+                    if(document.getBoolean("isNightMode") != null) SetNightMode(document.getBoolean("isNightMode"));
+
+
 
                 } else {
                     Log.d(TAG, "get failed with ", task.getException());
@@ -177,6 +217,7 @@ public class MainActivity extends UnityPlayerActivity {
     {
         ToggleButton simpleToggleButton = (ToggleButton) view;
         SetNightMode(simpleToggleButton.isChecked());
+        ShowIcon();
     }
 
     public void SetNightMode(boolean status)
@@ -225,6 +266,19 @@ public class MainActivity extends UnityPlayerActivity {
     private void requestRecordAudioPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             String requiredPermission = Manifest.permission.RECORD_AUDIO;
+
+            // If the user previously denied this permission then show a message explaining why
+            // this permission is needed
+            if (checkCallingOrSelfPermission(requiredPermission) == PackageManager.PERMISSION_DENIED) {
+                requestPermissions(new String[]{requiredPermission}, 101);
+            }
+        }
+    }
+
+    private void requestAlwaysONTopPermission() {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            String requiredPermission = Manifest.permission.SYSTEM_ALERT_WINDOW;
 
             // If the user previously denied this permission then show a message explaining why
             // this permission is needed
