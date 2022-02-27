@@ -1,0 +1,13 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "VoiceToSignDemo"
+include ':app'
+
+include ':unityLibrary'
+project(':unityLibrary').projectDir=new File('..\\UnityBuild\\unityLibrary')
